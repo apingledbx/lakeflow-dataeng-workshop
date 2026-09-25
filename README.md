@@ -17,7 +17,7 @@ Vocareum, and setup that works on AWS or Azure.
 - **Continuous pipelines + AutoCDC**: a continuous medallion fed by two `rate` sources, where bronze/silver are streaming tables (each silver via AutoCDC SCD Type 1) and a gold materialized view joins them and updates live.
 - **Zerobus Ingest**: direct gRPC ingest into Delta tables via the official `databricks-zerobus-ingest-sdk`.
 
-See [Labguide.md](./Labguide.md) for the step-by-step exercises (Lab 1 Zerobus ingestion, Lab 2 SDP, Lab 3 Genie Code, Lab 4 Continuous medallion).
+See [Labguide.ipynb](./Labguide.ipynb) for the step-by-step exercises (Lab 1 Zerobus ingestion, Lab 2 SDP, Lab 3 Genie Code, Lab 4 Continuous medallion).
 
 > Note: the optional Real-Time Mode (RTM) and CI/CD DABs (Gourmet) labs from the upstream
 > TMM workshop have been removed in this edition to keep it time-boxed.
@@ -66,4 +66,4 @@ If your workspace already defaults to real managed storage, leave the widget bla
 
 1. Clone this repo into the workspace (Workspace, Create, Git folder).
 2. Run `misc/create_my_schema.py` once to create your `de_workshop.<short_name>` schema.
-3. Follow `Labguide.md`, using your `short_name` wherever it asks for it.
+3. Open `Labguide.ipynb` as a notebook, using your `short_name` wherever it asks for it.
