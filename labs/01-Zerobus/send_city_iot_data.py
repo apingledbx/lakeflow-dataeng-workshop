@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %md
-# MAGIC # Lab 3 — Send a city IoT reading to Zerobus
+# MAGIC # Lab 1 — Send a city IoT reading to Zerobus
 # MAGIC
 # MAGIC You'll push one row directly into the Delta table `ops_data.zerobus.measurements`
 # MAGIC via the **official Zerobus Ingest SDK** (gRPC under the hood). The SDK handles

@@ -2,7 +2,7 @@ from pyspark import pipelines as dp
 from pyspark.sql.functions import col, expr
 
 # =====================================================================================
-# Lab 3 — Continuous medallion pipeline, TWO sources (rate), AutoCDC, MV gold
+# Lab 4 — Continuous medallion pipeline, TWO sources (rate), AutoCDC, MV gold
 #
 # Running in CONTINUOUS mode, two independent streams flow non-stop:
 #   Source 1 (readings)  -> sensor_readings_bronze  (ST, append feed)

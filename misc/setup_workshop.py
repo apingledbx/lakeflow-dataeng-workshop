@@ -7,8 +7,8 @@
 # MAGIC It's idempotent: safe to re-run. Does not touch per-attendee schemas.
 # MAGIC
 # MAGIC The workshop uses **two catalogs**:
-# MAGIC - `de_workshop` — attendee catalog. Each attendee owns a schema `de_workshop.<short_name>` and writes Lab 1/2 outputs there. This notebook creates the catalog and grants `account users` USE CATALOG + CREATE SCHEMA, so attendees self-serve their own schema via `misc/create_my_schema.py` (no Vocareum, no attendee list).
-# MAGIC - `ops_data` — shared ops catalog. Holds the shared landing volume (Lab 2 source) and the Zerobus target + config tables (Lab 3). Created by this notebook so attendees never need write access to it.
+# MAGIC - `de_workshop` — attendee catalog. Each attendee owns a schema `de_workshop.<short_name>` and writes Lab 2/3/4 outputs there. This notebook creates the catalog and grants `account users` USE CATALOG + CREATE SCHEMA, so attendees self-serve their own schema via `misc/create_my_schema.py` (no Vocareum, no attendee list).
+# MAGIC - `ops_data` — shared ops catalog. Holds the shared landing volume (Lab 3 source) and the Zerobus target + config tables (Lab 1). Created by this notebook so attendees never need write access to it.
 # MAGIC
 # MAGIC **Part A — Shared assets (in `ops_data`)**
 # MAGIC 1. Catalog `de_workshop` (if not exists) and catalog `ops_data` (if not exists)
@@ -69,8 +69,8 @@ CATALOG         = dbutils.widgets.get("catalog").strip()
 ZEROBUS_REGION  = dbutils.widgets.get("zerobus_region").strip()
 ZEROBUS_MANAGED_LOCATION = dbutils.widgets.get("zerobus_managed_location").strip()
 
-# Shared ops catalog — fixed name. Holds the shared landing volume (Lab 2 source)
-# and the Zerobus target + config tables (Lab 3). Kept separate from `CATALOG`
+# Shared ops catalog — fixed name. Holds the shared landing volume (Lab 3 source)
+# and the Zerobus target + config tables (Lab 1). Kept separate from `CATALOG`
 # (the attendee catalog) so attendee grants and ops-asset grants don't intermingle.
 OPS_CATALOG = "ops_data"
 
@@ -360,7 +360,7 @@ spark.sql(f"""
         temperature FLOAT  COMMENT 'Temperature in degrees Celsius',
         comment     STRING COMMENT 'Free-form note from the attendee (may be empty)'
     )
-    COMMENT 'Workshop Lab 3 target — one row per attendee submission via the Zerobus Ingest SDK'
+    COMMENT 'Workshop Lab 1 target — one row per attendee submission via the Zerobus Ingest SDK'
 """)
 print(f"Table ready: {OPS_CATALOG}.zerobus.measurements")
 
@@ -453,7 +453,16 @@ print(f"Grants applied to SP {SP_APPLICATION_ID}: USE CATALOG on {OPS_CATALOG}, 
 ctx              = dbutils.notebook.entry_point.getDbutils().notebook().getContext()
 WORKSPACE_URL    = "https://" + spark.conf.get("spark.databricks.workspaceUrl")
 WORKSPACE_ID     = ctx.workspaceId().getOrElse(None)
-ZEROBUS_ENDPOINT = f"https://{WORKSPACE_ID}.zerobus.{ZEROBUS_REGION}.cloud.databricks.com"
+# Zerobus host domain must match the cloud, derived from the workspace URL so this works
+# on any cloud: Azure -> azuredatabricks.net, GCP -> gcp.databricks.com, AWS -> cloud.databricks.com.
+_ws_host = spark.conf.get("spark.databricks.workspaceUrl")
+if "azuredatabricks.net" in _ws_host:
+    _ZB_DOMAIN = "azuredatabricks.net"
+elif "gcp.databricks.com" in _ws_host:
+    _ZB_DOMAIN = "gcp.databricks.com"
+else:
+    _ZB_DOMAIN = "cloud.databricks.com"
+ZEROBUS_ENDPOINT = f"https://{WORKSPACE_ID}.zerobus.{ZEROBUS_REGION}.{_ZB_DOMAIN}"
 
 print(f"WORKSPACE_URL    = {WORKSPACE_URL}")
 print(f"WORKSPACE_ID     = {WORKSPACE_ID}")
@@ -479,7 +488,7 @@ config_row = Row(
 
 spark.sql(
     f"COMMENT ON TABLE {OPS_CATALOG}.zerobus.config IS "
-    f"'Lab 3 Zerobus client config — read-only for attendees. "
+    f"'Lab 1 Zerobus client config — read-only for attendees. "
     f"Contains the OAuth client_secret in cleartext; SP grants are tightly scoped "
     f"to {OPS_CATALOG}.zerobus.measurements.'"
 )
