@@ -44,25 +44,19 @@ Run `misc/setup_workshop.py` as a workspace admin. Widgets:
 | `catalog` | `de_workshop` | Attendee catalog. |
 | `fraud_pct` | `3.0` | Percent of bookings seeded as fraud markers (Lab 3). |
 | `num_files` | `5` | JSONL files to split the seed across. |
-| `zerobus_region` | `us-west-2` | Region for the Zerobus endpoint (e.g. `us-west-2`, `eastus`). Blank skips Lab 1 (Zerobus) provisioning. Must be a Zerobus-supported region. |
-| `zerobus_managed_location` | (blank) | Optional fallback, see below. Leave blank in the common case. |
+| `zerobus_region` | `us-west-2` | Region for the Zerobus endpoint (e.g. `us-west-2`, `eastus`). Blank skips Lab 1 (Zerobus) provisioning. |
+| `zerobus_managed_location` | (blank) | Leave blank. Optional fallback, see below. |
 
 ### Zerobus storage (Lab 1)
 
-Zerobus writes directly into a Delta table. As of ~Sept 2026 it supports **default storage**
-(Public Preview, AWS + Azure), so on most serverless / Free Edition workspaces you need **no
-external storage** — leave `zerobus_managed_location` blank. Requirements:
+Zerobus writes directly into a Delta table and works on **default storage**, so leave
+`zerobus_managed_location` blank, no external storage needed. The setup's B6 gRPC smoke test
+confirms ingest works end to end.
 
-- Enable the workspace preview **Settings → Previews → "Zerobus Ingest Default Storage"** (plus base Zerobus). On Free Edition the toggle occasionally isn't exposed; if so, contact the Zerobus team.
-- Zerobus-supported region, AWS or Azure (not GCP). Free Edition also has a daily credit cap that can stop ingestion.
-- The setup's B6 gRPC smoke test is the real check; if it returns HTTP 403, the default-storage preview isn't active on that workspace.
-
-**Optional fallback** (workspace without the default-storage preview, where a bare default-storage
-table gets a 403 at insert): set `zerobus_managed_location` to a real external-location URL
-(`databricks external-locations list`), e.g. `s3://<bucket>/ops_data_zerobus` (AWS) or
-`abfss://<container>@<account>.dfs.core.windows.net/ops_data_zerobus` (Azure), and re-run — the
-`ops_data.zerobus` schema is pinned there instead. Free Edition cannot create external locations,
-so it relies on the default-storage preview above.
+**Optional fallback:** if a workspace ever rejects a default-storage write with HTTP 403, set
+`zerobus_managed_location` to a real external-location URL (`databricks external-locations list`),
+e.g. `s3://<bucket>/ops_data_zerobus` (AWS) or `abfss://<container>@<account>.dfs.core.windows.net/ops_data_zerobus`
+(Azure), and re-run — the `ops_data.zerobus` schema is pinned there instead.
 
 ## Attendee flow
 

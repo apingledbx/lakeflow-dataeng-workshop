@@ -295,16 +295,13 @@ if ZEROBUS_REGION and not _REGION_RE.fullmatch(ZEROBUS_REGION):
 # MAGIC %md
 # MAGIC ## B0. Zerobus target schema (default storage is fine)
 # MAGIC
-# MAGIC Zerobus writes directly into the target Delta table. As of ~Sept 2026, Zerobus supports
-# MAGIC ingesting into tables on **default storage** (Public Preview, AWS + Azure), so on most
-# MAGIC serverless / Free Edition workspaces you need **no external storage** — just ensure the
-# MAGIC workspace preview **Settings > Previews > "Zerobus Ingest Default Storage"** (plus base
-# MAGIC Zerobus) is enabled. The gRPC smoke test in B6 is the real check.
+# MAGIC Zerobus writes directly into the target Delta table and works on **default storage**, so
+# MAGIC no external storage is needed — leave `zerobus_managed_location` blank. The gRPC smoke
+# MAGIC test in B6 is the real end-to-end check.
 # MAGIC
-# MAGIC **Optional fallback:** on a workspace WITHOUT that preview, default-storage tables get a
-# MAGIC 403 at insert. In that case set the **`zerobus_managed_location`** widget to a real
-# MAGIC external-location URL (`databricks external-locations list`) and the schema is pinned
-# MAGIC there instead. Leave it blank otherwise (the common case).
+# MAGIC **Optional fallback:** if a workspace ever rejects a default-storage write with a 403, set
+# MAGIC the **`zerobus_managed_location`** widget to a real external-location URL
+# MAGIC (`databricks external-locations list`) and the schema is pinned there instead.
 
 # COMMAND ----------
 
@@ -342,11 +339,9 @@ _is_default_storage = bool(_effective) and any(
 
 if _is_default_storage and not ZEROBUS_MANAGED_LOCATION:
     print(
-        f"NOTE: {OPS_CATALOG}.zerobus is on workspace default storage ({_effective!r}). "
-        f"Zerobus supports default storage in Public Preview — make sure the "
-        f"'Zerobus Ingest Default Storage' workspace preview (+ base Zerobus) is enabled. "
-        f"If the B6 smoke test returns HTTP 403, either enable that preview, or set the "
-        f"`zerobus_managed_location` widget to a real external location and re-run."
+        f"NOTE: {OPS_CATALOG}.zerobus is on default storage ({_effective!r}) — supported by "
+        f"Zerobus. If the B6 smoke test ever returns HTTP 403, set the `zerobus_managed_location` "
+        f"widget to a real external location and re-run."
     )
 
 print(f"Storage note done — effective_location={_effective!r}  managed_location_widget={ZEROBUS_MANAGED_LOCATION or '(blank)'}")
