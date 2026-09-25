@@ -21,6 +21,7 @@
 # MAGIC - **Lab 2 — Manually code an SDP pipeline**: streaming table in **Python**, materialized view in **SQL** with three data-quality expectations wired in from the start. Reference files in <a href="$./labs/02-SDP/"><code>labs/02-SDP/</code></a>.
 # MAGIC - **Lab 3 — Learn how to use Genie Code as a data engineer**: all-**SQL** pipeline (AutoCDC + Auto Loader + join gold MV), produced from a single Genie Code prompt, and verified by you before it runs. Reference files in <a href="$./labs/03-GenieCode/"><code>labs/03-GenieCode/</code></a>.
 # MAGIC - **Lab 4 — Build a continuous medallion pipeline**: a **continuous** SDP pipeline fed by **two** `rate` sources (a readings feed and a sensor registry). Bronze and silver are **streaming tables** (each silver kept current by **AutoCDC** SCD Type 1), gold is a **materialized view** that joins the two silvers by zone, and you watch the downstream tables update live. Reference file in <a href="$./labs/04-Continuous/"><code>labs/04-Continuous/</code></a>.
+# MAGIC
 
 # COMMAND ----------
 
@@ -41,6 +42,7 @@
 # MAGIC Copy that `SHORT_NAME` and use it everywhere this guide says `SHORT_NAME`.
 # MAGIC
 # MAGIC Throughout this guide, replace `SHORT_NAME` with that exact value.
+# MAGIC
 
 # COMMAND ----------
 
@@ -63,6 +65,7 @@
 # MAGIC | `de_workshop` | The **attendee** catalog. Per-`SHORT_NAME` schemas live here, and Lab 2, Lab 3, and Lab 4 outputs land in `de_workshop.SHORT_NAME`. Fixed. |
 # MAGIC | `ops_data` | The **shared ops** catalog. Holds the read-only landing volume `/Volumes/ops_data/shared/landing/` (Lab 3 source) and the Zerobus tables `ops_data.zerobus.measurements` + `ops_data.zerobus.config` (Lab 1). Fixed. |
 # MAGIC | `<course_warehouse_name>` / `<course_warehouse_id>`  | The course SQL warehouse. Your instructor shares the exact name and ID. |
+# MAGIC
 
 # COMMAND ----------
 
@@ -79,6 +82,8 @@
 # MAGIC 3. Click **Create Git folder**. The repo clones into `de-workshop-repo/` in your workspace.
 # MAGIC
 # MAGIC Most of those lab folders have reference files only. Some folders include notebooks that you can run directly (for example `misc/create_my_schema.py`), as described below.
+# MAGIC
+# MAGIC
 
 # COMMAND ----------
 
@@ -170,6 +175,7 @@
 # MAGIC > Reference notebook: <a href="$./labs/01-Zerobus/send_city_iot_data"><code>labs/01-Zerobus/send_city_iot_data</code></a>.
 # MAGIC
 # MAGIC ---
+# MAGIC
 
 # COMMAND ----------
 
@@ -189,7 +195,7 @@
 # MAGIC 3. **Update catalog/schema** Right of the pipeline name, click the catalog/schema selector (it opens the **Default location** dialog). Set it to the following values:
 # MAGIC    - **Default catalog**: `de_workshop`
 # MAGIC    - **Default schema**: copy your `SHORT_NAME` and click **Save**. Make sure to use your correct schema name, since it is writable for you but other schemas aren't writable. **So the pipeline will only run if you select the correct schema.** 
-# MAGIC    
+# MAGIC
 # MAGIC    The dropdown sometimes only offers *"Create schema"* even though your `SHORT_NAME` schema already exists — ignore that, the typed/copied literal is accepted. 
 # MAGIC
 # MAGIC
@@ -305,6 +311,7 @@
 # MAGIC
 # MAGIC
 # MAGIC ---
+# MAGIC
 
 # COMMAND ----------
 
@@ -388,6 +395,7 @@
 # MAGIC The Lakeflow Pipelines Editor shows Genie Code's plan on the right, the generated SQL in the centre, and the resolved DAG with row counts at the bottom — three bronze streaming tables, one silver streaming table, and a gold materialized view. Use the row counts as your sanity check against the [Verify](#verify--the-step-that-matters-most) section.
 # MAGIC
 # MAGIC ---
+# MAGIC
 
 # COMMAND ----------
 
@@ -420,10 +428,7 @@
 # MAGIC ```python
 # MAGIC from pyspark import pipelines as dp
 # MAGIC from pyspark.sql.functions import col, expr
-
-# COMMAND ----------
-
-# MAGIC %md
+# MAGIC
 # MAGIC # ---------- SOURCE 1 -> BRONZE: temperature readings feed ----------
 # MAGIC @dp.table(
 # MAGIC     name="sensor_readings_bronze",
@@ -440,20 +445,9 @@
 # MAGIC         .withColumnRenamed("timestamp", "event_ts")
 # MAGIC         .select("sensor_id", "temperature_c", "status", "event_ts", "reading_seq")
 # MAGIC     )
-
-# COMMAND ----------
-
-# MAGIC %md
+# MAGIC
 # MAGIC # ---------- SOURCE 2 -> BRONZE: sensor registry feed (which zone each sensor is in) ----------
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC # A second, independent, slower rate source. The zone rotates slowly, so AutoCDC has real
-
-# COMMAND ----------
-
-# MAGIC %md
 # MAGIC # changes to apply.
 # MAGIC @dp.table(
 # MAGIC     name="sensor_registry_bronze",
@@ -474,10 +468,7 @@
 # MAGIC         .withColumnRenamed("timestamp", "updated_ts")
 # MAGIC         .select("sensor_id", "zone", "updated_ts", "registry_seq")
 # MAGIC     )
-
-# COMMAND ----------
-
-# MAGIC %md
+# MAGIC
 # MAGIC # ---------- SILVER 1: current reading per sensor via AUTO CDC (SCD Type 1) ----------
 # MAGIC dp.create_streaming_table(
 # MAGIC     name="sensor_state_silver",
@@ -490,10 +481,7 @@
 # MAGIC     sequence_by="reading_seq",
 # MAGIC     stored_as_scd_type=1,
 # MAGIC )
-
-# COMMAND ----------
-
-# MAGIC %md
+# MAGIC
 # MAGIC # ---------- SILVER 2: current zone per sensor via AUTO CDC (SCD Type 1) ----------
 # MAGIC dp.create_streaming_table(
 # MAGIC     name="sensor_zone_silver",
@@ -506,10 +494,7 @@
 # MAGIC     sequence_by="registry_seq",
 # MAGIC     stored_as_scd_type=1,
 # MAGIC )
-
-# COMMAND ----------
-
-# MAGIC %md
+# MAGIC
 # MAGIC # ---------- GOLD: join both silvers, aggregate by zone (materialized view) ----------
 # MAGIC @dp.materialized_view(
 # MAGIC     name="zone_stats_gold",
@@ -580,6 +565,7 @@
 # MAGIC One file, one pipeline, two live sources, and you have a self-maintaining bronze/silver/gold that reconciles each feed to current state and joins them for a business view. Streaming tables + AutoCDC + a gold MV is the everyday shape of a continuously updating multi-source medallion, and moving from triggered to continuous was a single setting.
 # MAGIC
 # MAGIC ---
+# MAGIC
 
 # COMMAND ----------
 
@@ -591,6 +577,7 @@
 # MAGIC * Getting Started with [OSS Apache SDP, VS Code](https://github.com/databricks/tmm/tree/main/OSS-SDP-OpenSkyNetwork)
 # MAGIC * Further watching: [Air Traffic Control with Apache Spark Structured Streaming, Real-Time Mode](https://www.databricks.com/resources/demos/videos/air-traffic-control-with-apache-spark-structured-streaming-real-time-mode)
 # MAGIC * Looking for the next Data Engineering workshop, or other [Databricks workshops](https://www.databricks.com/events?event_type=workshop&region=all) for DBSQL, AI, Unity Catalog
+# MAGIC
 
 # COMMAND ----------
 
@@ -598,3 +585,4 @@
 # MAGIC ## Credits
 # MAGIC
 # MAGIC Adapted from the upstream Databricks Technical Marketing workshop: [databricks/tmm — Lakeflow-DataEng-Workshop](https://github.com/databricks/tmm/tree/main/Lakeflow-DataEng-Workshop). Original labs and material are by the Databricks TMM team. This fork reorders the labs (ingestion-first), removes the Real-Time Mode and CI/CD labs, replaces the Vocareum-based schema provisioning with a self-service model, adds the continuous two-source medallion lab, and makes the Zerobus storage setup cloud-agnostic.
+# MAGIC
