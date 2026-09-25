@@ -13,7 +13,7 @@ Take your time, ask questions, and don't worry about breaking anything, your sch
 
 ### Overview
 
-This Labguide lives in this repo (`Labguide.md`). 
+This Labguide lives in this repo (`Labguide.md`). It is adapted from the upstream Databricks Technical Marketing workshop at [databricks/tmm — Lakeflow-DataEng-Workshop](https://github.com/databricks/tmm/tree/main/Lakeflow-DataEng-Workshop) (original material by the Databricks TMM team; see the [credits](#credits) at the end). 
 
 - **Lab 1 — Work with Zerobus Ingest to push IoT data (ingestion)** *(live instructor demo; attendees may follow along)*: one `ingest_record(...)` call via the official `databricks-zerobus-ingest-sdk` (gRPC) lands a row in `ops_data.zerobus.measurements`, with credentials fetched from a shared UC config table. Reference files in [`labs/01-Zerobus/`](https://github.com/apingledbx/lakeflow-dataeng-workshop/tree/main/labs/01-Zerobus).
 - **Lab 2 — Manually code an SDP pipeline**: streaming table in **Python**, materialized view in **SQL** with three data-quality expectations wired in from the start. Reference files in [`labs/02-SDP/`](https://github.com/apingledbx/lakeflow-dataeng-workshop/tree/main/labs/02-SDP).
@@ -543,3 +543,7 @@ One file, one pipeline, two live sources, and you have a self-maintaining bronze
 * Getting Started with [OSS Apache SDP, VS Code](https://github.com/databricks/tmm/tree/main/OSS-SDP-OpenSkyNetwork)
 * Further watching: [Air Traffic Control with Apache Spark Structured Streaming, Real-Time Mode](https://www.databricks.com/resources/demos/videos/air-traffic-control-with-apache-spark-structured-streaming-real-time-mode)
 * Looking for the next Data Engineering workshop, or other [Databricks workshops](https://www.databricks.com/events?event_type=workshop&region=all) for DBSQL, AI, Unity Catalog
+
+## Credits
+
+Adapted from the upstream Databricks Technical Marketing workshop: [databricks/tmm — Lakeflow-DataEng-Workshop](https://github.com/databricks/tmm/tree/main/Lakeflow-DataEng-Workshop). Original labs and material are by the Databricks TMM team. This fork reorders the labs (ingestion-first), removes the Real-Time Mode and CI/CD labs, replaces the Vocareum-based schema provisioning with a self-service model, adds the continuous two-source medallion lab, and makes the Zerobus storage setup cloud-agnostic.

@@ -4,6 +4,12 @@ A focused, instructor-led Databricks data engineering workshop. A trimmed fork o
 Databricks TMM "Lakeflow-DataEng-Workshop": three core labs plus a continuous pipeline, no
 Vocareum, and setup that works on AWS or Azure.
 
+> **Based on / credit:** this is adapted from the upstream Databricks Technical Marketing
+> workshop at [databricks/tmm — Lakeflow-DataEng-Workshop](https://github.com/databricks/tmm/tree/main/Lakeflow-DataEng-Workshop).
+> Original labs and material are by the Databricks TMM team; this fork reorders the labs,
+> removes the RTM and CI/CD labs, swaps the Vocareum flow for self-service schemas, adds a
+> continuous two-source medallion lab, and makes the Zerobus setup cloud-agnostic.
+
 ## Technologies covered
 
 - **Lakeflow Spark Declarative Pipelines (SDP)**: streaming tables, materialized views, and data-quality expectations, hand-coded in Python and SQL.
