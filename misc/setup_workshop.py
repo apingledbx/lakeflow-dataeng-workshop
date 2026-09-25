@@ -58,7 +58,7 @@ dbutils.widgets.text("catalog", "de_workshop", "Workshop catalog")
 dbutils.widgets.text("fraud_pct", "3.0", "% of bookings to flag as fraud")
 dbutils.widgets.text("num_files", "5", "Number of JSONL files to split the seed across")
 dbutils.widgets.text("zerobus_region", "us-west-2", "Zerobus region (e.g. us-west-2 / eastus) — set to blank to skip Part B")
-dbutils.widgets.text("zerobus_managed_location", "", "Zerobus managed location URL (blank = catalog default; set to a real external location if on default storage — see below)")
+dbutils.widgets.text("zerobus_managed_location", "", "OPTIONAL. Leave blank on default storage (supported via the Zerobus default-storage preview). Only set to a real external-location URL as a fallback if that preview is unavailable.")
 
 import re
 
@@ -293,20 +293,18 @@ if ZEROBUS_REGION and not _REGION_RE.fullmatch(ZEROBUS_REGION):
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## B0. Storage preflight — put the Zerobus schema on real cloud storage
+# MAGIC ## B0. Zerobus target schema (default storage is fine)
 # MAGIC
-# MAGIC Zerobus direct-write requires the target table to live in UC-managed **customer cloud
-# MAGIC storage** (S3 on AWS / ADLS on Azure / GCS on GCP) reachable by the Zerobus data plane.
-# MAGIC If the catalog has no explicit managed location and the schema doesn't override one,
-# MAGIC table writes fall back to workspace **default storage**, which Zerobus rejects with a
-# MAGIC 403 at insert time.
+# MAGIC Zerobus writes directly into the target Delta table. As of ~Sept 2026, Zerobus supports
+# MAGIC ingesting into tables on **default storage** (Public Preview, AWS + Azure), so on most
+# MAGIC serverless / Free Edition workspaces you need **no external storage** — just ensure the
+# MAGIC workspace preview **Settings > Previews > "Zerobus Ingest Default Storage"** (plus base
+# MAGIC Zerobus) is enabled. The gRPC smoke test in B6 is the real check.
 # MAGIC
-# MAGIC This is **cloud-agnostic**: the rule is the same on AWS and Azure, only the URL scheme
-# MAGIC differs (`s3://` vs `abfss://`). If your workspace's catalogs land on default storage,
-# MAGIC set the **`zerobus_managed_location`** widget to any real external-location URL
-# MAGIC (find one with `databricks external-locations list` — the workspace's own
-# MAGIC `*-ext-*` entry; the default managed catalog already uses it) and re-run. If your
-# MAGIC workspace already defaults to real managed storage, leave the widget blank.
+# MAGIC **Optional fallback:** on a workspace WITHOUT that preview, default-storage tables get a
+# MAGIC 403 at insert. In that case set the **`zerobus_managed_location`** widget to a real
+# MAGIC external-location URL (`databricks external-locations list`) and the schema is pinned
+# MAGIC there instead. Leave it blank otherwise (the common case).
 
 # COMMAND ----------
 
@@ -331,10 +329,9 @@ _catalog_loc = getattr(_catalog_info, "storage_root",     None)
 _schema_loc  = getattr(_schema_info,  "storage_location", None) or getattr(_schema_info, "storage_root", None)
 _effective   = _schema_loc or _catalog_loc
 
-# Confirmed workspace default-storage markers, per cloud. If the effective location matches
-# one of these AND no managed location was supplied, fail fast with an actionable message.
-# (Locations that inherit from the metastore report None here — that's fine, the B6 gRPC
-# smoke test below is the ultimate check.)
+# Detect workspace default storage (per cloud). Default storage is SUPPORTED by Zerobus
+# (Public Preview) — we do NOT fail here anymore; the B6 gRPC smoke test is the real gate.
+# We only print an informational note so a 403 there has an obvious explanation.
 _DEFAULT_STORAGE_MARKERS = (
     "s3://dbstorage-",                       # AWS Databricks default storage
     "abfss://unity-catalog-storage@",        # Azure Databricks default storage
@@ -344,22 +341,15 @@ _is_default_storage = bool(_effective) and any(
 )
 
 if _is_default_storage and not ZEROBUS_MANAGED_LOCATION:
-    raise RuntimeError(
-        f"\nZerobus storage preflight FAILED.\n"
-        f"\n"
-        f"The Zerobus schema '{OPS_CATALOG}.zerobus' is on **workspace default storage** "
-        f"(location={_effective!r}). Zerobus direct-write requires real customer-owned UC "
-        f"managed storage (S3 / ADLS / GCS) behind a STORAGE CREDENTIAL + EXTERNAL LOCATION; "
-        f"default-storage tables are rejected with HTTP 403 at insert.\n"
-        f"\n"
-        f"FIX (cloud-agnostic): find a real external location with\n"
-        f"    databricks external-locations list\n"
-        f"then set the `zerobus_managed_location` widget to that URL "
-        f"(e.g. 's3://<bucket>/ops_data_zerobus' or 'abfss://<container>@<acct>.dfs.core.windows.net/ops_data_zerobus') "
-        f"and RE-RUN this notebook.\n"
+    print(
+        f"NOTE: {OPS_CATALOG}.zerobus is on workspace default storage ({_effective!r}). "
+        f"Zerobus supports default storage in Public Preview — make sure the "
+        f"'Zerobus Ingest Default Storage' workspace preview (+ base Zerobus) is enabled. "
+        f"If the B6 smoke test returns HTTP 403, either enable that preview, or set the "
+        f"`zerobus_managed_location` widget to a real external location and re-run."
     )
 
-print(f"Storage preflight OK — effective_location={_effective!r}  managed_location_widget={ZEROBUS_MANAGED_LOCATION or '(blank)'}")
+print(f"Storage note done — effective_location={_effective!r}  managed_location_widget={ZEROBUS_MANAGED_LOCATION or '(blank)'}")
 
 # COMMAND ----------
 
