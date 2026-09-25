@@ -15,10 +15,10 @@ Take your time, ask questions, and don't worry about breaking anything, your sch
 
 This Labguide lives in this repo (`Labguide.md`). It is adapted from the upstream Databricks Technical Marketing workshop at [databricks/tmm — Lakeflow-DataEng-Workshop](https://github.com/databricks/tmm/tree/main/Lakeflow-DataEng-Workshop) (original material by the Databricks TMM team; see the [credits](#credits) at the end). 
 
-- **Lab 1 — Work with Zerobus Ingest to push IoT data (ingestion)** *(live instructor demo; attendees may follow along)*: one `ingest_record(...)` call via the official `databricks-zerobus-ingest-sdk` (gRPC) lands a row in `ops_data.zerobus.measurements`, with credentials fetched from a shared UC config table. Reference files in [`labs/01-Zerobus/`](https://github.com/apingledbx/lakeflow-dataeng-workshop/tree/main/labs/01-Zerobus).
-- **Lab 2 — Manually code an SDP pipeline**: streaming table in **Python**, materialized view in **SQL** with three data-quality expectations wired in from the start. Reference files in [`labs/02-SDP/`](https://github.com/apingledbx/lakeflow-dataeng-workshop/tree/main/labs/02-SDP).
-- **Lab 3 — Learn how to use Genie Code as a data engineer**: all-**SQL** pipeline (AutoCDC + Auto Loader + join gold MV), produced from a single Genie Code prompt, and verified by you before it runs. Reference files in [`labs/03-GenieCode/`](https://github.com/apingledbx/lakeflow-dataeng-workshop/tree/main/labs/03-GenieCode).
-- **Lab 4 — Build a continuous medallion pipeline**: a **continuous** SDP pipeline fed by **two** `rate` sources (a readings feed and a sensor registry). Bronze and silver are **streaming tables** (each silver kept current by **AutoCDC** SCD Type 1), gold is a **materialized view** that joins the two silvers by zone, and you watch the downstream tables update live. Reference file in [`labs/04-Continuous/`](https://github.com/apingledbx/lakeflow-dataeng-workshop/tree/main/labs/04-Continuous).
+- **Lab 1 — Work with Zerobus Ingest to push IoT data (ingestion)** *(live instructor demo; attendees may follow along)*: one `ingest_record(...)` call via the official `databricks-zerobus-ingest-sdk` (gRPC) lands a row in `ops_data.zerobus.measurements`, with credentials fetched from a shared UC config table. Reference files in [`labs/01-Zerobus/`](./labs/01-Zerobus/).
+- **Lab 2 — Manually code an SDP pipeline**: streaming table in **Python**, materialized view in **SQL** with three data-quality expectations wired in from the start. Reference files in [`labs/02-SDP/`](./labs/02-SDP/).
+- **Lab 3 — Learn how to use Genie Code as a data engineer**: all-**SQL** pipeline (AutoCDC + Auto Loader + join gold MV), produced from a single Genie Code prompt, and verified by you before it runs. Reference files in [`labs/03-GenieCode/`](./labs/03-GenieCode/).
+- **Lab 4 — Build a continuous medallion pipeline**: a **continuous** SDP pipeline fed by **two** `rate` sources (a readings feed and a sensor registry). Bronze and silver are **streaming tables** (each silver kept current by **AutoCDC** SCD Type 1), gold is a **materialized view** that joins the two silvers by zone, and you watch the downstream tables update live. Reference file in [`labs/04-Continuous/`](./labs/04-Continuous/).
 
 ## Important — your SHORT_NAME and your schema
 
@@ -30,7 +30,7 @@ Your personal schema is `de_workshop.SHORT_NAME`, and it is writable by you.
 
 ### Before you start — create your schema (run once)
 
-Open [`misc/create_my_schema.py`](https://github.com/apingledbx/lakeflow-dataeng-workshop/blob/main/misc/create_my_schema.py) from the cloned repo, attach
+Open [`misc/create_my_schema.py`](./misc/create_my_schema.py) from the cloned repo, attach
 serverless, and **Run all**. It figures out your `SHORT_NAME` automatically, creates
 `de_workshop.SHORT_NAME`, makes you the owner, and prints the exact schema name to use.
 Copy that `SHORT_NAME` and use it everywhere this guide says `SHORT_NAME`.
@@ -154,7 +154,7 @@ You should see every attendee's row, including your own. In a real production de
 - **Fine-grained OAuth — like a hotel keycard, not a master key.** The SDK mints tokens scoped via `authorization_details` to one table: even if the SP's client_secret leaked, the only thing it could do is append rows to `measurements`. No `SELECT *`, no `DELETE`, no `DROP`.
 - **SDK over REST** — the `databricks-zerobus-ingest-sdk` uses gRPC with a persistent stream and durability ACKs (higher throughput, simpler retries) and handles all the OAuth + `authorization_details` plumbing internally. The Zerobus REST API is available too.
 
-> Reference notebook: [`labs/01-Zerobus/send_city_iot_data.py`](https://github.com/apingledbx/lakeflow-dataeng-workshop/blob/main/labs/01-Zerobus/send_city_iot_data.py).
+> Reference notebook: [`labs/01-Zerobus/send_city_iot_data.py`](./labs/01-Zerobus/send_city_iot_data.py).
 
 ---
 
@@ -393,7 +393,7 @@ This is the realistic shape: two systems emitting independently (a device feed a
 
 ### Step 4a — paste the pipeline (Python, one file)
 
-Create a transformation file named `continuous_medallion` (language **Python**) and paste the block below. It defines two bronze feeds, two AutoCDC silvers, and the gold join. Reference file: [`labs/04-Continuous/continuous_medallion.py`](https://github.com/apingledbx/lakeflow-dataeng-workshop/blob/main/labs/04-Continuous/continuous_medallion.py).
+Create a transformation file named `continuous_medallion` (language **Python**) and paste the block below. It defines two bronze feeds, two AutoCDC silvers, and the gold join. Reference file: [`labs/04-Continuous/continuous_medallion.py`](./labs/04-Continuous/continuous_medallion.py).
 
 ```python
 from pyspark import pipelines as dp
