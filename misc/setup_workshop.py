@@ -58,7 +58,7 @@ dbutils.widgets.text("catalog", "de_workshop", "Workshop catalog")
 dbutils.widgets.text("fraud_pct", "3.0", "% of bookings to flag as fraud")
 dbutils.widgets.text("num_files", "5", "Number of JSONL files to split the seed across")
 dbutils.widgets.text("zerobus_region", "us-west-2", "Zerobus region (e.g. us-west-2 / eastus) — set to blank to skip Part B")
-dbutils.widgets.text("zerobus_managed_location", "", "OPTIONAL. Leave blank on default storage (supported via the Zerobus default-storage preview). Only set to a real external-location URL as a fallback if that preview is unavailable.")
+dbutils.widgets.text("zerobus_managed_location", "", "OPTIONAL. Leave blank (default storage works). Fallback only: set to a real external-location URL if a workspace ever rejects a default-storage Zerobus write with a 403.")
 
 import re
 
