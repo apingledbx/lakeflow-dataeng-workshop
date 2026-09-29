@@ -54,6 +54,8 @@ dbutils.widgets.text("catalog", "", "Existing catalog (required)")
 dbutils.widgets.text("fraud_pct", "3.0", "% of bookings to flag as fraud")
 dbutils.widgets.text("num_files", "5", "Number of JSONL files to split the seed across")
 
+# COMMAND ----------
+
 import re
 
 _CATALOG_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")

@@ -16,6 +16,8 @@
 
 dbutils.widgets.text("catalog", "", "Workshop catalog (same as setup)")
 
+# COMMAND ----------
+
 import re
 
 _CATALOG_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
