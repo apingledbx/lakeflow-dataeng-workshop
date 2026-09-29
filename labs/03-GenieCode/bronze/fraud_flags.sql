@@ -3,6 +3,9 @@
 CREATE OR REFRESH STREAMING TABLE fraud_flags
 TBLPROPERTIES ('created_by' = 'genie_code', 'created_at' = '2026-05-17T13:34:00Z')
 AS SELECT * FROM STREAM(read_files(
-  '/Volumes/ops_data/shared/landing/booking_fraud_flags/',
+  -- Replace <CATALOG> with your workshop catalog (the one used in
+  -- misc/setup_workshop_existing_catalog.py). The seed data lives in that catalog's
+  -- shared.landing volume.
+  '/Volumes/<CATALOG>/shared/landing/booking_fraud_flags/',
   format => 'json'
 ));

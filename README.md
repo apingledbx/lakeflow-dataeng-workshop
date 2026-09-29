@@ -58,8 +58,38 @@ confirms ingest works end to end.
 e.g. `s3://<bucket>/ops_data_zerobus` (AWS) or `abfss://<container>@<account>.dfs.core.windows.net/ops_data_zerobus`
 (Azure), and re-run — the `ops_data.zerobus` schema is pinned there instead.
 
+## Alternative: single existing catalog (no Zerobus)
+
+Use this variant when the workshop runs inside a customer's **existing** catalog and nobody has
+rights to `CREATE CATALOG`, or when you want to skip the Zerobus lab. Everything (shared landing
+data and per-attendee schemas) lives in the one catalog you pass in. There is no `ops_data`
+catalog and no Zerobus provisioning.
+
+**Admin (once):** run [`misc/setup_workshop_existing_catalog.py`](./misc/setup_workshop_existing_catalog.py). Widgets:
+
+| Widget | Default | Notes |
+|---|---|---|
+| `catalog` | (required) | The customer's existing catalog. Not created by the notebook; it must already exist and you need privileges on it. |
+| `fraud_pct` | `3.0` | Percent of bookings seeded as fraud markers (Lab 3, Genie Code). |
+| `num_files` | `5` | JSONL files to split the seed across. |
+
+It verifies the catalog is reachable (no `CREATE CATALOG`), creates `<catalog>.shared` + the
+`<catalog>.shared.landing` volume, seeds the fraud markers, and applies best-effort grants to
+`account users` (USE CATALOG, CREATE SCHEMA, USE_SCHEMA on `shared`, READ_VOLUME on the volume).
+If the runner is not the catalog owner, any grant that fails prints the exact `GRANT` for the
+catalog owner to run.
+
+**Attendee (once):** run [`misc/create_my_schema_existing_catalog.py`](./misc/create_my_schema_existing_catalog.py)
+with the same `catalog` widget to create `<catalog>.<short_name>`.
+
+**Lab compatibility with this variant:**
+
+- **Lab 2 (SDP)** and **Lab 4 (Continuous)**: work as-is. Point the pipeline's target catalog/schema at `<catalog>.<short_name>`.
+- **Lab 3 (Genie Code)**: `bookings.sql` and `payments.sql` read `samples.*` (fine). In `fraud_flags.sql`, replace the `<CATALOG>` placeholder in the volume path with the workshop catalog: `/Volumes/<CATALOG>/shared/landing/booking_fraud_flags/`.
+- **Lab 1 (Zerobus)**: not provisioned by this setup (skipped). Use the standard `misc/setup_workshop.py` if you need it.
+
 ## Attendee flow
 
 1. Clone this repo into the workspace (Workspace, Create, Git folder).
-2. Run `misc/create_my_schema.py` once to create your `de_workshop.<short_name>` schema.
+2. Run `misc/create_my_schema.py` once to create your `de_workshop.<short_name>` schema (or `misc/create_my_schema_existing_catalog.py` for the single-catalog variant above).
 3. Open `Labguide.py` (imports as a notebook), using your `short_name` wherever it asks for it.
