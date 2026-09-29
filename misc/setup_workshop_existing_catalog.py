@@ -58,7 +58,9 @@ dbutils.widgets.text("num_files", "5", "Number of JSONL files to split the seed 
 
 import re
 
-_CATALOG_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# Catalog names may contain hyphens (e.g. dev-monet). Allow them, then backtick-quote the
+# identifier in every SQL statement below (via CAT) so hyphenated names parse correctly.
+_CATALOG_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_-]*$")
 
 CATALOG = dbutils.widgets.get("catalog").strip()
 
@@ -69,9 +71,13 @@ if not CATALOG:
     )
 if not _CATALOG_RE.fullmatch(CATALOG):
     raise ValueError(
-        "Set 'catalog' to a simple UC identifier: letters, numbers, and underscores; "
-        "it must start with a letter or underscore."
+        "Set 'catalog' to a UC catalog identifier: letters, numbers, underscores, and hyphens "
+        "(e.g. dev-monet); it must start with a letter, number, or underscore."
     )
+
+# Backtick-quoted catalog for SQL statements (handles hyphenated names like `dev-monet`).
+# Use CAT in SQL; keep plain CATALOG for volume paths and log/print text.
+CAT = f"`{CATALOG}`"
 
 try:
     FRAUD_PCT = float(dbutils.widgets.get("fraud_pct"))
@@ -100,7 +106,7 @@ print(f"catalog={CATALOG}  fraud_pct={FRAUD_PCT}%  num_files={NUM_FILES}")
 # The catalog must already exist and be reachable by the runner. We do a light USE CATALOG
 # probe (works with just USE CATALOG privilege) and give an actionable error if it fails.
 try:
-    spark.sql(f"USE CATALOG {CATALOG}")
+    spark.sql(f"USE CATALOG {CAT}")
     print(f"Catalog {CATALOG!r} is reachable.")
 except Exception as e:
     raise RuntimeError(
@@ -118,8 +124,8 @@ except Exception as e:
 
 # COMMAND ----------
 
-spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.shared COMMENT 'Workshop shared assets (landing volume for the lab source data)'")
-spark.sql(f"CREATE VOLUME IF NOT EXISTS {CATALOG}.shared.landing COMMENT 'Shared landing for workshop seed data'")
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CAT}.shared COMMENT 'Workshop shared assets (landing volume for the lab source data)'")
+spark.sql(f"CREATE VOLUME IF NOT EXISTS {CAT}.shared.landing COMMENT 'Shared landing for workshop seed data'")
 
 VOLUME_PATH = f"/Volumes/{CATALOG}/shared/landing/booking_fraud_flags"
 dbutils.fs.mkdirs(VOLUME_PATH)
@@ -223,13 +229,13 @@ def try_grant(sql: str, desc: str):
 
 # Attendees self-serve their own schema `<catalog>.<short_name>` via misc/create_my_schema.py,
 # so they need USE CATALOG + CREATE SCHEMA. They also read the shared landing volume.
-try_grant(f"GRANT USE CATALOG ON CATALOG {CATALOG} TO `account users`",
+try_grant(f"GRANT USE CATALOG ON CATALOG {CAT} TO `account users`",
           f"USE CATALOG on {CATALOG} -> account users")
-try_grant(f"GRANT CREATE SCHEMA ON CATALOG {CATALOG} TO `account users`",
+try_grant(f"GRANT CREATE SCHEMA ON CATALOG {CAT} TO `account users`",
           f"CREATE SCHEMA on {CATALOG} -> account users (attendees self-serve their schema)")
-try_grant(f"GRANT USE_SCHEMA ON SCHEMA {CATALOG}.shared TO `account users`",
+try_grant(f"GRANT USE_SCHEMA ON SCHEMA {CAT}.shared TO `account users`",
           f"USE_SCHEMA on {CATALOG}.shared -> account users")
-try_grant(f"GRANT READ_VOLUME ON VOLUME {CATALOG}.shared.landing TO `account users`",
+try_grant(f"GRANT READ_VOLUME ON VOLUME {CAT}.shared.landing TO `account users`",
           f"READ_VOLUME on {CATALOG}.shared.landing -> account users")
 
 # COMMAND ----------

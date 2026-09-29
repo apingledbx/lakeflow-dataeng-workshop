@@ -20,7 +20,8 @@ dbutils.widgets.text("catalog", "", "Workshop catalog (same as setup)")
 
 import re
 
-_CATALOG_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+# Catalog names may contain hyphens (e.g. dev-monet); allow them and backtick-quote in SQL.
+_CATALOG_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_-]*$")
 CATALOG = dbutils.widgets.get("catalog").strip()
 
 if not CATALOG:
@@ -30,17 +31,20 @@ if not CATALOG:
     )
 if not _CATALOG_RE.fullmatch(CATALOG):
     raise ValueError(
-        "Set 'catalog' to a simple UC identifier: letters, numbers, and underscores; "
-        "it must start with a letter or underscore."
+        "Set 'catalog' to a UC catalog identifier: letters, numbers, underscores, and hyphens "
+        "(e.g. dev-monet); it must start with a letter, number, or underscore."
     )
+
+# Backtick-quoted catalog for SQL (handles hyphenated names like `dev-monet`).
+CAT = f"`{CATALOG}`"
 
 # COMMAND ----------
 
 user = spark.sql("SELECT current_user()").first()[0]
 short_name = user.split("@")[0].replace(".", "_").replace("-", "_").lower()
 
-spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CATALOG}.{short_name} COMMENT 'Personal workshop schema for {user}'")
-spark.sql(f"ALTER SCHEMA {CATALOG}.{short_name} OWNER TO `{user}`")
+spark.sql(f"CREATE SCHEMA IF NOT EXISTS {CAT}.`{short_name}` COMMENT 'Personal workshop schema for {user}'")
+spark.sql(f"ALTER SCHEMA {CAT}.`{short_name}` OWNER TO `{user}`")
 
 print("=" * 60)
 print(f"  Your schema is:  {CATALOG}.{short_name}")

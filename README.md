@@ -82,6 +82,10 @@ catalog owner to run.
 **Attendee (once):** run [`misc/create_my_schema_existing_catalog.py`](./misc/create_my_schema_existing_catalog.py)
 with the same `catalog` widget to create `<catalog>.<short_name>`.
 
+**Hyphenated catalog names** (e.g. `dev-monet`) are supported: both setup notebooks backtick-quote
+the catalog in every SQL statement. In volume paths and pipeline target settings, use the name
+as-is with no backticks (e.g. `/Volumes/dev-monet/shared/landing/booking_fraud_flags/`).
+
 **Lab compatibility with this variant:**
 
 - **Lab 2 (SDP)** and **Lab 4 (Continuous)**: work as-is. Point the pipeline's target catalog/schema at `<catalog>.<short_name>`.
